@@ -72,6 +72,8 @@ static inline char *ikcp_encode16u(char *p, unsigned short w)
 #else
 	*(unsigned short*)(p) = w;
 #endif
+	*(unsigned short*)p = ((*(unsigned short*)p>>8)&0xff) | // move byte 3 to byte 0
+		((*(unsigned short*)p<<8)&0xff00); // byte 0 to byte 3
 	p += 2;
 	return p;
 }
@@ -85,6 +87,8 @@ static inline const char *ikcp_decode16u(const char *p, unsigned short *w)
 #else
 	*w = *(const unsigned short*)p;
 #endif
+	*w = ((*w>>8)&0xff) | // move byte 3 to byte 0
+		((*w<<8)&0xff00); // byte 0 to byte 3
 	p += 2;
 	return p;
 }
@@ -100,6 +104,10 @@ static inline char *ikcp_encode32u(char *p, IUINT32 l)
 #else
 	*(IUINT32*)p = l;
 #endif
+	*(IUINT32*)p = ((*(IUINT32*)p>>24)&0xff) | // move byte 0 to byte 3
+		((*(IUINT32*)p<<8)&0xff0000) | // move byte 2 to byte 1
+		((*(IUINT32*)p>>8)&0xff00) | // move byte 1 to byte 2
+		((*(IUINT32*)p<<24)&0xff000000); // byte 3 to byte 0
 	p += 4;
 	return p;
 }
@@ -112,9 +120,13 @@ const char *ikcp_decode32u(const char *p, IUINT32 *l)
 	*l = *(const unsigned char*)(p + 2) + (*l << 8);
 	*l = *(const unsigned char*)(p + 1) + (*l << 8);
 	*l = *(const unsigned char*)(p + 0) + (*l << 8);
-#else 
+#else
 	*l = *(const IUINT32*)p;
 #endif
+	*l = ((*l>>24)&0xff) | // move byte 3 to byte 0
+		((*l<<8)&0xff0000) | // move byte 1 to byte 2
+		((*l>>8)&0xff00) | // move byte 2 to byte 1
+		((*l<<24)&0xff000000); // byte 0 to byte 3
 	p += 4;
 	return p;
 }
